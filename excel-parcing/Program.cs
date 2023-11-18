@@ -53,7 +53,7 @@ namespace excel_parcing
                         Excel.Range CellRange = UsedRange.Cells[9,i];
                         string CellText = (CellRange == null || CellRange.Value2 == null) ? null :
                         (CellRange as Excel.Range).Value2.ToString();
-
+                        //Test
                         if (CellText != null)
                         {
                             string[] group = CellText.Split(new char[] { '-'});
