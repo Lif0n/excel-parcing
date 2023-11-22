@@ -10,7 +10,8 @@ namespace excel_parcing.Models
     {
         public int Id { get; set; }
 
-        public int? IdSpeciality = null;
+        public int? SpecialityId = null;
+        public Speciality Speciality { get; set; } = null;
         public string Name { get; set; }
         public string Shortname { get; set; }
     }

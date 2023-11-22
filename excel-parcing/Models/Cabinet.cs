@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace excel_parcing.Models
 {
-    public class Group
+    public class Cabinet
     {
         public int Id { get; set; }
-        public int CourseId { get; set; }
-        public Course Course { get; set; }
-        public string Code { get; set; }
+        public int Number { get; set; }
+        public int? CabinetTypeId = null;
+        public CabinetType CabinetType { get; set; } = null;
     }
 }

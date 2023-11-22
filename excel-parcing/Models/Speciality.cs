@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace excel_parcing.Models
 {
-    public class Lesson
+    public class Speciality
     {
+        public int Id { get; set; }
+        public int Name { get; set; }
     }
 }
