@@ -55,6 +55,7 @@
     <Compile Include="Models\Speciality.cs" />
     <Compile Include="Models\Teacher.cs" />
     <Compile Include="Models\Teacher_Subject.cs" />
+    <Compile Include="Parsing.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
