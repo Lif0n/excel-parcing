@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using excel_parcing.Models;
 using Microsoft.Office.Interop.Excel;
@@ -41,11 +42,48 @@ namespace excel_parcing
             foreach (Excel.Worksheet worksheet in sheets)
             {
                 UsedRange = worksheet.UsedRange;
+
                 ParseCoursesAndGroups();
                 ParseTeachers();
                 ParseCabinets();
+                
             }
         }
+        //парсинг всей информации
+        public List<Task> ParseAllDataAsync()
+        {
+            object rOnly = true;
+            object SaveChanges = false;
+            object MissingObj = System.Reflection.Missing.Value;
+
+            Excel.Application app = new Excel.Application();
+            Excel.Workbooks workbooks = app.Workbooks;
+            Excel.Workbook workbook = workbooks.Open(Path, MissingObj, rOnly, MissingObj, MissingObj,
+                                        MissingObj, MissingObj, MissingObj, MissingObj, MissingObj,
+                                        MissingObj, MissingObj, MissingObj, MissingObj, MissingObj);
+
+            // Получение всех страниц докуента
+            Excel.Sheets sheets = workbook.Sheets;
+            foreach (Excel.Worksheet worksheet in sheets)
+            {
+                UsedRange = worksheet.UsedRange;
+
+                List<Task> tasks= new List<Task>()
+                {
+                    new Task(ParseCabinets),
+                    new Task(ParseCoursesAndGroups),
+                    new Task(ParseTeachers),
+                    new Task(ParseCabinets)
+                };
+                foreach (Task task in tasks)
+                {
+                    task.Start();
+                }
+                return tasks;
+            }
+            return null;
+        }
+        //вывод всех данных
         public void OutputAllData()
         {
             CoursesPasport();
@@ -53,6 +91,7 @@ namespace excel_parcing
             TeachersPassport();
             CabinetsPassport();
         }
+        //парсинг направлений и групп
         public void ParseCoursesAndGroups()
         {
             int CourseId = 1;
@@ -88,12 +127,13 @@ namespace excel_parcing
                 else break;
             }
         }
+        //парсинг преподов
         public void ParseTeachers()
         {
             int teacherId = 1;
-            for (int x = 10; x < 159; x++)
+            for (int x = 3; x < 36; x++)
             {
-                for (int y = 3; y < 36; y++)
+                for (int y = 10; y < 159; y++)
                 {
                     Range CellRange = UsedRange.Cells[x, y];
                     string CellText = (CellRange == null || CellRange.Value2 == null) ? null :
@@ -123,12 +163,13 @@ namespace excel_parcing
                 }
             }
         }
+        //парсинг кабинетов
         public void ParseCabinets()
         {
             int cabinetId = 1;
-            for (int x = 10; x < 159; x++)
+            for (int x = 3; x < 36; x++)
             {
-                for (int y = 3; y < 36 ;y++)
+                for (int y = 10; y < 159 ;y++)
                 {
                     Range CellRange = UsedRange.Cells[x, y];
                     string CellText = (CellRange == null || CellRange.Value2 == null) ? null :
@@ -137,9 +178,9 @@ namespace excel_parcing
                     {
                         if (CellText.Contains("ауд."))
                         {
-                            if (Cabinets.Where(c => c.Number == CellText.Remove(0, CellText.Length-4)).FirstOrDefault() == null)
+                            if (Cabinets.Where(c => c.Number == CellText.Remove(0, CellText.Length-3)).FirstOrDefault() == null)
                             {
-                                Cabinets.Add(new Cabinet { Id = cabinetId, Number = CellText.Remove(0, CellText.Length - 4) });
+                                Cabinets.Add(new Cabinet { Id = cabinetId, Number = CellText.Remove(0, CellText.Length - 3) });
                                 cabinetId++;
                             }
                         }
@@ -147,24 +188,45 @@ namespace excel_parcing
                 }
             }
         }
+        public void ParseObjects()
+        {
+            int subjectId = 1;
+            for (int x = 3; x < 36; x++)
+            {
+                for (int y = 10; y < 159; y++)
+                {
+                    Range CellRange = UsedRange.Cells[x, y];
+                    string CellText = (CellRange == null || CellRange.Value2 == null) ? null :
+                        (CellRange as Excel.Range).Value2.ToString();
+                    if (CellText != null)
+                    {
+
+                    }
+                }
+            }
+        }
+        //вывод всех направлений
         public void CoursesPasport()
         {
             Console.WriteLine("Направления");
             foreach (Course course in Courses)
                 Console.WriteLine($"{course.Id.ToString()} {course.Name} {course.Shortname}");
         }
+        //вывод всех групп
         public void GroupsPasport()
         {
             Console.WriteLine("Группы");
             foreach (Group group in Groups)
                 Console.WriteLine($"{group.Id.ToString()} {group.CourseId.ToString()} {group.Code}");
         }
+        //вывод всех преподов
         public void TeachersPassport()
         {
             Console.WriteLine("Преподаватели");
             foreach (Teacher teacher in Teachers)
                 Console.WriteLine($"{teacher.Id} {teacher.Surname} {teacher.Name} {teacher.Patronymic}");
         }
+        //вывод всех кабинетов
         public void CabinetsPassport()
         {
             Console.WriteLine("Кабинеты");

@@ -14,14 +14,23 @@ namespace excel_parcing
 {
     public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             Console.Write("Введите путь файла: ");
             string path = Console.ReadLine();
+            path = "C:\\Users\\user\\Downloads\\kopiya-kopiya-bolshoe-raspisanie-p-1-semestr.xls";
+            //создание и запуск таймера
+            Stopwatch stopwatch = Stopwatch.StartNew();
             Parsing parsing = new Parsing(path);
-            parsing.ParseAllData();
+            List<Task> tasks = parsing.ParseAllDataAsync();
+            //ожидание завершения всех задач
+            Task.WaitAll(tasks.ToArray());
+            //вывод всей информации
             parsing.OutputAllData();
+            stopwatch.Stop();
+            Console.WriteLine($"Время выполнения: {stopwatch.ElapsedMilliseconds.ToString()}");
             Console.ReadKey();
+            
         }
     }
 }
