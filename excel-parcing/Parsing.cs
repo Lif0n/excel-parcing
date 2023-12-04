@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -15,7 +16,7 @@ namespace excel_parcing
         public string Path { get; set; }
         public List<Cabinet> Cabinets = new List<Cabinet>();
         public List<Course> Courses = new List<Course>();
-        public List<Group> Groups = new List<Group>();
+        public List<Models.Group> Groups = new List<Models.Group>();
         public List<Subject> Subjects = new List<Subject>();
         public List<Teacher> Teachers = new List<Teacher>();
         public List<Teacher_Subject> Teacher_Subjects = new List<Teacher_Subject>();
@@ -115,7 +116,7 @@ namespace excel_parcing
                         CourseId++;
                     }
                     Course CurrentCourse = Courses.Where(x => x.Name == group[0]).FirstOrDefault();
-                    Groups.Add(new Group
+                    Groups.Add(new Models.Group
                     {
                         Id = GroupId,
                         Course = CurrentCourse,
@@ -167,6 +168,7 @@ namespace excel_parcing
         public void ParseCabinets()
         {
             int cabinetId = 1;
+            Regex regex = new Regex("ауд\\. \\d+");
             for (int x = 3; x < 36; x++)
             {
                 for (int y = 10; y < 159 ;y++)
@@ -176,12 +178,21 @@ namespace excel_parcing
                         (CellRange as Excel.Range).Value2.ToString();
                     if (CellText != null)
                     {
-                        if (CellText.Contains("ауд."))
+                        MatchCollection matches = regex.Matches(CellText);
+                        if (matches.Count > 0)
                         {
-                            if (Cabinets.Where(c => c.Number == CellText.Remove(0, CellText.Length-3)).FirstOrDefault() == null)
+                            foreach(Match match in matches)
                             {
-                                Cabinets.Add(new Cabinet { Id = cabinetId, Number = CellText.Remove(0, CellText.Length - 3) });
-                                cabinetId++;
+                                string[] s = match.ToString().Trim().Split(' ');
+                                if (Cabinets.Where(z=>z.Number == s[1]).Count() == 0)
+                                {
+                                    Cabinets.Add(new Cabinet
+                                    {
+                                        Id = cabinetId,
+                                        Number = s[1],
+                                    });
+                                    cabinetId++;
+                                }
                             }
                         }
                     }
@@ -216,7 +227,7 @@ namespace excel_parcing
         public void GroupsPasport()
         {
             Console.WriteLine("Группы");
-            foreach (Group group in Groups)
+            foreach (var group in Groups)
                 Console.WriteLine($"{group.Id.ToString()} {group.CourseId.ToString()} {group.Code}");
         }
         //вывод всех преподов
