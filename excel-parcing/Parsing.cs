@@ -132,7 +132,9 @@ namespace excel_parcing
         public void ParseTeachers()
         {
             int teacherId = 1;
-            for (int x = 3; x < 36; x++)
+            Regex regex = new Regex(@"[А-ЯЁ][а-яё]*([-][А-ЯЁ][а-яё]*)?\\s[А-ЯЁ]\\.?[А-ЯЁ]\\.?");
+
+			for (int x = 3; x < 36; x++)
             {
                 for (int y = 10; y < 159; y++)
                 {
@@ -141,7 +143,25 @@ namespace excel_parcing
                         (CellRange as Excel.Range).Value2.ToString();
                     if (CellText != null)
                     {
-                        if (CellText.Contains(" ") && CellText.Contains("."))
+                        MatchCollection matches = regex.Matches(CellText);
+                        if (matches.Count > 0)
+                        {
+                            foreach (Match match in matches)
+                            {
+                                string[] s = match.ToString().Trim().Split(' ', '.');
+                                if (Teachers.Where(z=>z.Surname == s[0] && z.Name == s[1] && z.Patronymic == s[2]).Count() == 0)
+                                {
+                                    Teachers.Add(new Teacher
+                                    {
+                                        Id = teacherId,
+                                        Surname = s[0],
+                                        Name = s[1],
+                                        Patronymic = s[2]
+                                    });
+                                }
+                            }
+                        }
+/*                        if (CellText.Contains(" ") && CellText.Contains("."))
                         {
                             string[] teacher = CellText.Split(new char[] { ' ', '.' }, StringSplitOptions.RemoveEmptyEntries);
                             if (teacher.Length == 3 || teacher.Length == 5)
@@ -159,7 +179,7 @@ namespace excel_parcing
                                     teacherId++;
                                 }
                             }
-                        }
+                        }*/
                     }
                 }
             }
