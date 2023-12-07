@@ -74,7 +74,8 @@ namespace excel_parcing
                     new Task(ParseCabinets),
                     new Task(ParseCoursesAndGroups),
                     new Task(ParseTeachers),
-                    new Task(ParseCabinets)
+                    new Task(ParseCabinets),
+                    new Task(ParseObjects),
                 };
                 foreach (Task task in tasks)
                 {
@@ -91,6 +92,7 @@ namespace excel_parcing
             GroupsPasport();
             TeachersPassport();
             CabinetsPassport();
+            SubjectsPassport();
         }
         //парсинг направлений и групп
         public void ParseCoursesAndGroups()
@@ -132,13 +134,13 @@ namespace excel_parcing
         public void ParseTeachers()
         {
             int teacherId = 1;
-            Regex regex = new Regex(@"[А-ЯЁ][а-яё]*([-][А-ЯЁ][а-яё]*)?\\s[А-ЯЁ]\\.?[А-ЯЁ]\\.?");
+            Regex regex = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.[А-ЯЁ]\.*");
 
 			for (int x = 3; x < 36; x++)
             {
                 for (int y = 10; y < 159; y++)
                 {
-                    Range CellRange = UsedRange.Cells[x, y];
+                    Range CellRange = UsedRange.Cells[y, x];
                     string CellText = (CellRange == null || CellRange.Value2 == null) ? null :
                         (CellRange as Excel.Range).Value2.ToString();
                     if (CellText != null)
@@ -158,28 +160,10 @@ namespace excel_parcing
                                         Name = s[1],
                                         Patronymic = s[2]
                                     });
-                                }
-                            }
-                        }
-/*                        if (CellText.Contains(" ") && CellText.Contains("."))
-                        {
-                            string[] teacher = CellText.Split(new char[] { ' ', '.' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (teacher.Length == 3 || teacher.Length == 5)
-                            {
-                                if (Teachers.Where(t => t.Name == teacher[1] && t.Patronymic == teacher[2] && t.Surname == teacher[0]).FirstOrDefault() == null
-                                    && teacher[1].Length == 1 && teacher[2].Length == 1 && teacher[0].Length > 2)
-                                {
-                                    Teachers.Add(new Teacher
-                                    {
-                                        Id = teacherId,
-                                        Name = teacher[1],
-                                        Surname = teacher[0],
-                                        Patronymic = teacher[2],
-                                    });
                                     teacherId++;
                                 }
                             }
-                        }*/
+                        }
                     }
                 }
             }
@@ -193,7 +177,7 @@ namespace excel_parcing
             {
                 for (int y = 10; y < 159 ;y++)
                 {
-                    Range CellRange = UsedRange.Cells[x, y];
+                    Range CellRange = UsedRange.Cells[y, x];
                     string CellText = (CellRange == null || CellRange.Value2 == null) ? null :
                         (CellRange as Excel.Range).Value2.ToString();
                     if (CellText != null)
@@ -222,17 +206,44 @@ namespace excel_parcing
         public void ParseObjects()
         {
             int subjectId = 1;
+            Regex regCab = new Regex(@"ауд\. \d+");
+            Regex regTeacher = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.[А-ЯЁ]\.*");
             for (int x = 3; x < 36; x++)
             {
-                for (int y = 10; y < 159; y++)
+                for (int y = 10; y < 159; y+=2)
                 {
-                    Range CellRange = UsedRange.Cells[x, y];
+                    Range CellRange = UsedRange.Cells[y, x];
+                    Range NextCellRange = UsedRange.Cells[y+1, x];
                     string CellText = (CellRange == null || CellRange.Value2 == null) ? null :
                         (CellRange as Excel.Range).Value2.ToString();
-                    if (CellText != null)
-                    {
+                    string NextCellText = (NextCellRange == null || NextCellRange.Value2 == null) ? null :
+                        (NextCellRange as Excel.Range).Value2.ToString();
 
-                    }
+                    string s = String.Concat(CellText, " ", NextCellText);
+                        MatchCollection cabMatches = regCab.Matches(s);
+                        MatchCollection teacherMatches = regTeacher.Matches(s);
+                        foreach (Match m in cabMatches) 
+                        {
+                            s = s.Replace(m.ToString(), "");
+                        }
+                        foreach (Match m in teacherMatches)
+                        {
+                            s = s.Replace(m.ToString(), "");
+                        }
+                    s = s.Trim();
+                        if (!String.IsNullOrEmpty(s))
+                        {
+                            if (Subjects.Where(z => z.Name == s && z.Shortname == s).Count() == 0)
+                            {
+                                Subjects.Add(new Subject
+                                {
+                                    Id = subjectId,
+                                    Name = s,
+                                    Shortname = s,
+                                });
+                                subjectId++;
+                            }
+                        }
                 }
             }
         }
@@ -263,6 +274,12 @@ namespace excel_parcing
             Console.WriteLine("Кабинеты");
             foreach (Cabinet cabinet in Cabinets)
                 Console.WriteLine($"{cabinet.Id} {cabinet.Number}");
+        }
+        public void SubjectsPassport()
+        {
+            Console.WriteLine("Предметы");
+            foreach (Subject subject in Subjects)
+                Console.WriteLine($"{subject.Id} {subject.Name}");
         }
     }
 }
