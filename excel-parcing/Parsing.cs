@@ -251,6 +251,10 @@ namespace excel_parcing
                 }
             }
         }
+        public void ParseTeacher_Subject()
+        {
+
+        }
         //вывод всех направлений
         public void CoursesPasport()
         {
