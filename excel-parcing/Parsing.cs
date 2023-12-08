@@ -71,7 +71,6 @@ namespace excel_parcing
 
                 List<Task> tasks= new List<Task>()
                 {
-                    new Task(ParseCabinets),
                     new Task(ParseCoursesAndGroups),
                     new Task(ParseTeachers),
                     new Task(ParseCabinets),
@@ -134,7 +133,7 @@ namespace excel_parcing
         public void ParseTeachers()
         {
             int teacherId = 1;
-            Regex regex = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.[А-ЯЁ]\.*");
+            Regex regex = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.\s*[А-ЯЁ]\.*");
 
 			for (int x = 3; x < 36; x++)
             {
@@ -172,7 +171,7 @@ namespace excel_parcing
         public void ParseCabinets()
         {
             int cabinetId = 1;
-            Regex regex = new Regex("ауд\\. \\d+");
+            Regex regex = new Regex(@"ауд\.\s*\d+");
             for (int x = 3; x < 36; x++)
             {
                 for (int y = 10; y < 159 ;y++)
@@ -206,12 +205,14 @@ namespace excel_parcing
         public void ParseObjects()
         {
             int subjectId = 1;
-            Regex regCab = new Regex(@"ауд\. \d+");
-            Regex regTeacher = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.[А-ЯЁ]\.*");
+            Regex regCab = new Regex(@"ауд\.\s*\d+");
+            Regex regTeacher = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.\s*[А-ЯЁ]\.*");
             for (int x = 3; x < 36; x++)
             {
                 for (int y = 10; y < 159; y+=2)
                 {
+                    if (y == 34 || y == 59 || y == 84 || y == 109 || y == 134)
+                        y++;
                     Range CellRange = UsedRange.Cells[y, x];
                     Range NextCellRange = UsedRange.Cells[y+1, x];
                     string CellText = (CellRange == null || CellRange.Value2 == null) ? null :
@@ -220,30 +221,33 @@ namespace excel_parcing
                         (NextCellRange as Excel.Range).Value2.ToString();
 
                     string s = String.Concat(CellText, " ", NextCellText);
-                        MatchCollection cabMatches = regCab.Matches(s);
-                        MatchCollection teacherMatches = regTeacher.Matches(s);
-                        foreach (Match m in cabMatches) 
+                    MatchCollection cabMatches = regCab.Matches(s);
+                    MatchCollection teacherMatches = regTeacher.Matches(s);
+                    foreach (Match m in cabMatches) 
+                    {
+                        s = s.Replace(m.ToString(), "");
+                    }
+                    foreach (Match m in teacherMatches)
+                    {
+                        s = s.Replace(m.ToString(), "");
+                    }
+					s = s.Contains("Космонавта Комарова 55") ? s.Replace("Космонавта Комарова 55", "") : s;
+					foreach (Match m in new Regex(@"\d{3}").Matches(s))
+						s = s.Replace(m.ToString(), "");
+					s = s.Trim();
+					if (!String.IsNullOrEmpty(s))
+                    {
+                        if (Subjects.Where(z => z.Name == s && z.Shortname == s).Count() == 0)
                         {
-                            s = s.Replace(m.ToString(), "");
-                        }
-                        foreach (Match m in teacherMatches)
-                        {
-                            s = s.Replace(m.ToString(), "");
-                        }
-                    s = s.Trim();
-                        if (!String.IsNullOrEmpty(s))
-                        {
-                            if (Subjects.Where(z => z.Name == s && z.Shortname == s).Count() == 0)
+                            Subjects.Add(new Subject
                             {
-                                Subjects.Add(new Subject
-                                {
                                     Id = subjectId,
                                     Name = s,
                                     Shortname = s,
-                                });
-                                subjectId++;
-                            }
+                            });
+                            subjectId++;
                         }
+                    }
                 }
             }
         }
