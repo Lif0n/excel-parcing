@@ -20,6 +20,7 @@ namespace excel_parcing
         public List<Subject> Subjects = new List<Subject>();
         public List<Teacher> Teachers = new List<Teacher>();
         public List<Teacher_Subject> Teacher_Subjects = new List<Teacher_Subject>();
+        public List<Main_Lesson> Main_Lessons = new List<Main_Lesson>();
         Excel.Range UsedRange = null;
         public Parsing(string path)
         {
@@ -75,6 +76,7 @@ namespace excel_parcing
                     new Task(ParseTeachers),
                     new Task(ParseCabinets),
                     new Task(ParseObjects),
+                    new Task(ParseLessons)
                 };
                 foreach (Task task in tasks)
                 {
@@ -251,10 +253,54 @@ namespace excel_parcing
                 }
             }
         }
-        public void ParseTeacher_Subject()
+        public void ParseLessons()
         {
+/*			int id = 1;
+			for (int x = 3; x < 36; x++)
+			{
+                int weekday = 1;
+				for (int y = 10; y < 159; y += 24)
+				{
+                    string s = "";
+                    int lesson = 1;
+                    for (int i = 0; i < 4; i++)
+                    {
+						Range CellRange = UsedRange.Cells[y + i, x];
+						s += CellRange.Value2 == null ? "" : CellRange.Value2.ToString()+" ";
+					}
+                    weekday++;
+                    y++;
+				}
+			}*/
 
-        }
+
+
+
+
+			int id = 1;
+            int lesson = 1;
+			for (int x = 3; x < 36; x++)
+			{
+				int weekday = 1;
+				for (int y = 10; y < 159;)
+				{
+                    if (lesson == 6)
+                    {
+                        y++;
+                        weekday++;
+                        lesson = 1;
+                    }
+					string s = "";
+					for (int i = 0; i < 4; i++)
+					{
+						Range CellRange = UsedRange.Cells[y, x];
+			            s += CellRange.Value2 == null ? "" : CellRange.Value2.ToString() + " ";
+                        y++;
+			        }
+                    lesson++;
+				}
+			}
+		}
         //вывод всех направлений
         public void CoursesPasport()
         {
