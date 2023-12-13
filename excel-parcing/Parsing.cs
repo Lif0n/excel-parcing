@@ -255,48 +255,50 @@ namespace excel_parcing
         }
         public void ParseLessons()
         {
-/*			int id = 1;
-			for (int x = 3; x < 36; x++)
-			{
-                int weekday = 1;
-				for (int y = 10; y < 159; y += 24)
-				{
-                    string s = "";
-                    int lesson = 1;
-                    for (int i = 0; i < 4; i++)
-                    {
-						Range CellRange = UsedRange.Cells[y + i, x];
-						s += CellRange.Value2 == null ? "" : CellRange.Value2.ToString()+" ";
-					}
-                    weekday++;
-                    y++;
-				}
-			}*/
-
-
-
-
-
+			Regex regCab = new Regex(@"ауд\.\s*\d+");
+			Regex regTeacher = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.\s*[А-ЯЁ]\.*");
 			int id = 1;
             int lesson = 1;
 			for (int x = 3; x < 36; x++)
 			{
+                string group = UsedRange.Cells[9, x].Value2 == null ? "" : UsedRange.Cells[9, x].Value2.ToString();
 				int weekday = 1;
 				for (int y = 10; y < 159;)
 				{
-                    if (lesson == 6)
+					if (y == 34 || y == 59 || y == 84 || y == 109 || y == 134)
+						y++;
+					if (lesson == 6)
                     {
                         y++;
                         weekday++;
                         lesson = 1;
                     }
 					string s = "";
+                    string s1 = "";
+					bool isOne = true;
 					for (int i = 0; i < 4; i++)
 					{
+                        isOne = true;
 						Range CellRange = UsedRange.Cells[y, x];
+                        if (i ==1)
+                        {
+                            if (CellRange.Borders[Excel.XlBordersIndex.xlEdgeBottom].Weight == -4138)
+                            {
+                                isOne = false;
+                                s1 += UsedRange.Cells[y + 1, x].Value2 == null ? "" : UsedRange.Cells[y + 1, x].Value2.ToString() + " ";
+                                s1 += UsedRange.Cells[y + 2, x].Value2 == null ? "" : UsedRange.Cells[y + 2, x].Value2.ToString() + " ";
+                                y += 2;
+                                break;
+                            }
+                        }
+                        //-4138
 			            s += CellRange.Value2 == null ? "" : CellRange.Value2.ToString() + " ";
                         y++;
 			        }
+                    if (!string.IsNullOrWhiteSpace(s) || !string.IsNullOrWhiteSpace(s1))
+                    {
+
+                    }
                     lesson++;
 				}
 			}
