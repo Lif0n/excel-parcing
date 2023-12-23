@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Parser2.cs" />
     <Compile Include="Models\Cabinet.cs" />
     <Compile Include="Models\CabinetType.cs" />
     <Compile Include="Models\Course.cs" />
