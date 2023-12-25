@@ -18,7 +18,7 @@ namespace excel_parcing
         {
             Console.Write("Введите путь файла: ");
             string path = Console.ReadLine();
-            path = @"C:\Users\user\Documents\kopiya-kopiya-bolshoe-raspisanie-p-1-semestr.xls";
+            path = @"C:\Users\home\Documents\kopiya-kopiya-bolshoe-raspisanie-p-1-semestr.xls";
             //создание и запуск таймера
             Stopwatch stopwatch = Stopwatch.StartNew();
             Parsing parsing = new Parsing(path);

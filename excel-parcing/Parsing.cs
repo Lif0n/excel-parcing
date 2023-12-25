@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using excel_parcing.Models;
 using Microsoft.Office.Interop.Excel;
 using Excel = Microsoft.Office.Interop.Excel;
+using System.Runtime.CompilerServices;
 
 namespace excel_parcing
 {
@@ -48,6 +49,7 @@ namespace excel_parcing
         public List<Teacher> Teachers = new List<Teacher>();
         public List<Teacher_Subject> Teacher_Subjects = new List<Teacher_Subject>();
         public List<Main_Lesson> Main_Lessons = new List<Main_Lesson>();
+        public List<Main_Teacher_Lesson> Main_Teacher_Lessons = new List<Main_Teacher_Lesson>();
         Excel.Range UsedRange = null;
 
         public void ParseAllData()
@@ -288,30 +290,77 @@ namespace excel_parcing
                         continue;
                     }
                     GetOrCreate(s);
-                    if (s == "Морозова АА")
-                        throw new Exception();
                 }
             }
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         public void ParseLessons()
         {
             Regex regCab = new Regex(@"ауд\.\s*\d+");
             Regex regTeacher = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.\s*[А-ЯЁ]\.*");
             int id = 1;
-            int lesson = 1;
+            int lessonNumber = 1;
             for (int x = 3; x < 36; x++)
             {
-                string group = UsedRange.Cells[9, x].Value2 == null ? "" : UsedRange.Cells[9, x].Value2.ToString();
+                Models.Group group = CheckGroup(UsedRange.Cells[9, x].Value2 == null ? "" : UsedRange.Cells[9, x].Value2.ToString());
                 int weekday = 1;
                 for (int y = 10; y < 159;)
                 {
-                    if (_config.SkipRows.Contains(y))
-                        y++;
-                    if (lesson == 6)
+                    if (lessonNumber >6)
                     {
                         y++;
                         weekday++;
-                        lesson = 1;
+                        lessonNumber = 1;
                     }
                     string s = "";
                     string s1 = "";
@@ -320,29 +369,216 @@ namespace excel_parcing
                     {
                         isOne = true;
                         Range CellRange = UsedRange.Cells[y, x];
-                        if (i == 1)
+						//-4138
+						s += CellRange.Value2 == null ? "" : CellRange.Value2.ToString() + " ";
+						if (i == 1)
                         {
                             if (CellRange.Borders[Excel.XlBordersIndex.xlEdgeBottom].Weight == -4138)
                             {
                                 isOne = false;
                                 s1 += UsedRange.Cells[y + 1, x].Value2 == null ? "" : UsedRange.Cells[y + 1, x].Value2.ToString() + " ";
                                 s1 += UsedRange.Cells[y + 2, x].Value2 == null ? "" : UsedRange.Cells[y + 2, x].Value2.ToString() + " ";
-                                y += 2;
+                                y += 3;
                                 break;
                             }
                         }
-                        //-4138
-                        s += CellRange.Value2 == null ? "" : CellRange.Value2.ToString() + " ";
                         y++;
-                    }
-                    if (!string.IsNullOrWhiteSpace(s) || !string.IsNullOrWhiteSpace(s1))
+					}
+					lessonNumber++;
+					if (!string.IsNullOrWhiteSpace(s) || !string.IsNullOrWhiteSpace(s1))
                     {
-
-                    }
-                    lesson++;
+                        if (!string.IsNullOrEmpty(s))
+                        {
+							Cabinet cabinet = CheckCabinet(s);
+							s = DeleteCabinet(s);
+							Teacher[] lessonsTeachers = CheckTeacher(s);
+							s = DeleteTeacher(s);
+                            Subject subject= CheckSubject(s);
+							Main_Lesson lesson = new Main_Lesson
+							{
+								Id = Main_Lessons.Count() + 1,
+								LessonNumber = lessonNumber,
+								Weekday = weekday,
+								isDistantсe = false,
+								GroupId = group.Id,
+                                CabinetId = cabinet.Id,
+                                SubjectId = subject.Id,
+							};
+							if (isOne == false)
+							{
+								lesson.WeekNumber = 1;
+							}
+                            Main_Lessons.Add(lesson);
+						}
+                        if (!string.IsNullOrEmpty(s1))
+                        {
+							Cabinet cabinet = CheckCabinet(s1);
+							s = DeleteCabinet(s1);
+							Teacher[] lessonsTeachers = CheckTeacher(s1);
+							s = DeleteTeacher(s1);
+							Subject subject = CheckSubject(s1);
+							Main_Lesson lesson = new Main_Lesson
+							{
+								Id = Main_Lessons.Count() + 1,
+								LessonNumber = lessonNumber,
+								Weekday = weekday,
+								isDistantсe = false,
+								GroupId = group.Id,
+								CabinetId = cabinet.Id,
+								SubjectId = subject.Id,
+                                WeekNumber = 2
+							};
+                            Main_Lessons.Add(lesson);
+						}
+					}
                 }
             }
         }
+
+
+
+
+
+
+        private Models.Group CheckGroup(string text)
+        {
+			string[] groupText = text.Split(new char[] { '-' });
+			if (Courses.Any(x => x.Shortname == groupText[0]) == false)
+			{
+                Courses.Add(new Course
+                {
+                    Id = Courses.Count() + 1,
+				    Name = groupText[0],
+                    Shortname = groupText[0]
+                }) ;
+			}
+			Course CurrentCourse = Courses.Where(x => x.Name == groupText[0]).FirstOrDefault();
+			Models.Group group = new Models.Group
+			{
+				Id = Groups.Count()+1,
+				CourseId = CurrentCourse.Id,
+				Code = groupText[1]
+			};
+            Groups.Add(group);
+			return group;
+        }
+
+        private Cabinet CheckCabinet(string s)
+        {
+            Cabinet cabinet = new Cabinet();
+			Regex regex = new Regex(@"ауд\.\s*\d+");
+			MatchCollection matches = regex.Matches(s);
+			if (matches.Count == 0)
+			{
+				return null;
+			}
+			foreach (Match match in matches)
+			{
+				string[] cab = match.ToString().Trim().Split(' ', '.').Where(m => m != "").ToArray();
+				if (Cabinets.Any(z => z.Number == cab[1]) == false)
+				{
+					cabinet = new Cabinet
+					{
+						Id = Cabinets.Count()+1,
+						Number = cab[1],
+					};
+                }
+                else
+                {
+                    cabinet = Cabinets.Where(z => z.Number == cab[1]).FirstOrDefault();
+                }
+			}
+            Cabinets.Add(cabinet);
+			return cabinet;
+        }
+        private string DeleteCabinet(string s)
+        {
+			Regex regex = new Regex(@"ауд\.\s*\d+");
+			MatchCollection matches = regex.Matches(s);
+			foreach (Match match in matches)
+            {
+                s = s.Replace(match.ToString(), "");
+            }
+            return s.Trim();
+		}
+        private Subject CheckSubject(string s)
+        {
+			s = s.Contains("Космонавта Комарова 55") ? s.Replace("Космонавта Комарова 55", "") : s;
+
+			foreach (Match m in new Regex(@"\d{3}").Matches(s))
+				s = s.Replace(m.ToString(), "");
+
+			s = s.Trim();
+			return GetOrCreate(s);
+		}
+        private Teacher[] CheckTeacher(string CellText)
+        {
+			Regex regex = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.\s*[А-ЯЁ]\.*");
+			MatchCollection matches = regex.Matches(CellText);
+            Teacher[] lessonTeachers = new Teacher[2];
+			foreach (Match match in matches)
+			{
+				string[] s = match.ToString().Trim().Split(' ', '.');
+				if (Teachers.Any(z => z.Surname == s[0] && z.Name == s[1] && z.Patronymic == s[2]))
+				{
+                    if (lessonTeachers[0] == null)
+                    {
+                        lessonTeachers[0] = Teachers.Where(z => z.Surname == s[0] && z.Name == s[1] && z.Patronymic == s[2]).FirstOrDefault();
+					}
+                    else
+                    {
+						lessonTeachers[1] = Teachers.Where(z => z.Surname == s[0] && z.Name == s[1] && z.Patronymic == s[2]).FirstOrDefault();
+					}
+				}
+                else
+                {
+					Teachers.Add(new Teacher
+					{
+						Id = Teachers.Count()+1,
+						Surname = s[0],
+						Name = s[1],
+						Patronymic = s[2]
+					});
+                    if (lessonTeachers[0] == null)
+                    {
+                        lessonTeachers[0] = Teachers.Last();
+                    }
+				}
+			}
+            return lessonTeachers;
+		}
+        private string DeleteTeacher(string s)
+        {
+			Regex regex = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.\s*[А-ЯЁ]\.*");
+			MatchCollection matches = regex.Matches(s);
+            foreach (Match match in matches) 
+            {
+                s = s.Replace(match.ToString(), "");
+            }
+            s.Trim();
+            return s;
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         private Subject GetOrCreate(string word)
         {
             foreach (var item in Subjects)
@@ -356,7 +592,11 @@ namespace excel_parcing
                     return item;
                 }
             }
-            Subject sbj = new Subject() { Name = word };
+            Subject sbj = new Subject()
+            {
+                Name = word,
+                Shortname = word
+            };
             Subjects.Add(sbj);
             sbj.Id = Subjects.Max(x => x.Id) + 1;
             return sbj;
