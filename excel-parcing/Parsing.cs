@@ -9,6 +9,7 @@ using excel_parcing.Models;
 using Microsoft.Office.Interop.Excel;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Runtime.CompilerServices;
+using System.Net.Http.Headers;
 
 namespace excel_parcing
 {
@@ -70,10 +71,10 @@ namespace excel_parcing
             {
                 UsedRange = worksheet.UsedRange;
 
-                ParseCoursesAndGroups();
-                ParseTeachers();
-                ParseCabinets();
-
+                /*                ParseCoursesAndGroups();
+                                ParseTeachers();
+                                ParseCabinets();*/
+                ParseLessons();
             }
         }
         //парсинг всей информации
@@ -101,7 +102,6 @@ namespace excel_parcing
                     new Task(ParseTeachers),
                     new Task(ParseCabinets),
                     new Task(ParseSubjects),
-                    new Task(ParseLessons)
                 };
                 foreach (Task task in tasks)
                 {
@@ -401,13 +401,18 @@ namespace excel_parcing
 								Weekday = weekday,
 								isDistantсe = false,
 								GroupId = group.Id,
-                                CabinetId = cabinet.Id,
                                 SubjectId = subject.Id,
 							};
 							if (isOne == false)
 							{
 								lesson.WeekNumber = 1;
 							}
+
+                            if (cabinet == null)
+                                lesson.CabinetId = null;
+                            else
+                                lesson.CabinetId = cabinet.Id;
+
                             Main_Lessons.Add(lesson);
 						}
                         if (!string.IsNullOrEmpty(s1))
@@ -428,7 +433,13 @@ namespace excel_parcing
 								SubjectId = subject.Id,
                                 WeekNumber = 2
 							};
-                            Main_Lessons.Add(lesson);
+
+							if (cabinet == null)
+								lesson.CabinetId = null;
+							else
+								lesson.CabinetId = cabinet.Id;
+
+							Main_Lessons.Add(lesson);
 						}
 					}
                 }
@@ -442,25 +453,29 @@ namespace excel_parcing
 
         private Models.Group CheckGroup(string text)
         {
-			string[] groupText = text.Split(new char[] { '-' });
-			if (Courses.Any(x => x.Shortname == groupText[0]) == false)
-			{
-                Courses.Add(new Course
+            if (!string.IsNullOrEmpty(text))
+            {
+                string[] groupText = text.Split(new char[] { '-' });
+                if (Courses.Any(x => x.Shortname == groupText[0]) == false)
                 {
-                    Id = Courses.Count() + 1,
-				    Name = groupText[0],
-                    Shortname = groupText[0]
-                }) ;
-			}
-			Course CurrentCourse = Courses.Where(x => x.Name == groupText[0]).FirstOrDefault();
-			Models.Group group = new Models.Group
-			{
-				Id = Groups.Count()+1,
-				CourseId = CurrentCourse.Id,
-				Code = groupText[1]
-			};
-            Groups.Add(group);
-			return group;
+                    Courses.Add(new Course
+                    {
+                        Id = Courses.Count() + 1,
+                        Name = groupText[0],
+                        Shortname = groupText[0]
+                    });
+                }
+                Course CurrentCourse = Courses.Where(x => x.Name == groupText[0]).FirstOrDefault();
+                Models.Group group = new Models.Group
+                {
+                    Id = Groups.Count() + 1,
+                    CourseId = CurrentCourse.Id,
+                    Code = groupText[1]
+                };
+                Groups.Add(group);
+                return group;
+            }
+            else return null;
         }
 
         private Cabinet CheckCabinet(string s)
@@ -482,13 +497,13 @@ namespace excel_parcing
 						Id = Cabinets.Count()+1,
 						Number = cab[1],
 					};
-                }
+					Cabinets.Add(cabinet);
+				}
                 else
                 {
                     cabinet = Cabinets.Where(z => z.Number == cab[1]).FirstOrDefault();
                 }
 			}
-            Cabinets.Add(cabinet);
 			return cabinet;
         }
         private string DeleteCabinet(string s)
@@ -656,7 +671,7 @@ namespace excel_parcing
         public void TeachersPassport()
         {
             Console.WriteLine("Преподаватели");
-            Teachers = Teachers.OrderBy(x=>x.Surname).ToList();
+            //Teachers = Teachers.OrderBy(x=>x.Surname).ToList();
             foreach (Teacher teacher in Teachers)
                 Console.WriteLine($"{teacher.Id} {teacher.Surname} {teacher.Name} {teacher.Patronymic}");
         }

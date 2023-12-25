@@ -23,10 +23,11 @@ namespace excel_parcing
             Stopwatch stopwatch = Stopwatch.StartNew();
             Parsing parsing = new Parsing(path);
             Console.WriteLine("Парсинг начался");
-            List<Task> tasks = parsing.ParseAllDataAsync();
+            //List<Task> tasks = parsing.ParseAllDataAsync();
             //ожидание завершения всех задач
-            Task.WaitAll(tasks.ToArray());
+            //Task.WaitAll(tasks.ToArray());
             //вывод всей информации
+            parsing.ParseAllData();
             parsing.OutputAllData();
             stopwatch.Stop();
             Console.WriteLine($"Время выполнения: {stopwatch.ElapsedMilliseconds.ToString()}");
