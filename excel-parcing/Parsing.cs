@@ -136,17 +136,16 @@ namespace excel_parcing
                     continue;
                 }
                 string[] group = CellText.Split(new char[] { '-' });
-                if (Courses.Where(x => x.Shortname == group[0]).FirstOrDefault() != null)
+                if (Courses.Where(x => x.Shortname == group[0]).FirstOrDefault() == null)
                 {
-                    continue;
-                }
-                Courses.Add(new Course
-                {
-                    Id = CourseId,
-                    Name = group[0],
-                    Shortname = group[0]
-                });
-                CourseId++;
+					Courses.Add(new Course
+					{
+						Id = CourseId,
+						Name = group[0],
+						Shortname = group[0]
+					});
+					CourseId++;
+				}
                 Course CurrentCourse = Courses.Where(x => x.Name == group[0]).FirstOrDefault();
                 Groups.Add(new Models.Group
                 {
@@ -356,12 +355,6 @@ namespace excel_parcing
                 int weekday = 1;
                 for (int y = 10; y < 159;)
                 {
-                    if (lessonNumber >6)
-                    {
-                        y++;
-                        weekday++;
-                        lessonNumber = 1;
-                    }
                     string s = "";
                     string s1 = "";
                     bool isOne = true;
@@ -378,18 +371,18 @@ namespace excel_parcing
                                 isOne = false;
                                 s1 += UsedRange.Cells[y + 1, x].Value2 == null ? "" : UsedRange.Cells[y + 1, x].Value2.ToString() + " ";
                                 s1 += UsedRange.Cells[y + 2, x].Value2 == null ? "" : UsedRange.Cells[y + 2, x].Value2.ToString() + " ";
-                                y += 3;
+                                y +=3;
                                 break;
                             }
                         }
-                        y++;
+						y++;
 					}
-					lessonNumber++;
 					if (!string.IsNullOrWhiteSpace(s) || !string.IsNullOrWhiteSpace(s1))
                     {
                         if (!string.IsNullOrEmpty(s))
                         {
-							Cabinet cabinet = CheckCabinet(s);
+                            Console.WriteLine($"{weekday} {lessonNumber} {s}");
+/*							Cabinet cabinet = CheckCabinet(s);
 							s = DeleteCabinet(s);
 							Teacher[] lessonsTeachers = CheckTeacher(s);
 							s = DeleteTeacher(s);
@@ -413,36 +406,44 @@ namespace excel_parcing
                             else
                                 lesson.CabinetId = cabinet.Id;
 
-                            Main_Lessons.Add(lesson);
+                            Main_Lessons.Add(lesson);*/
 						}
                         if (!string.IsNullOrEmpty(s1))
                         {
-							Cabinet cabinet = CheckCabinet(s1);
-							s = DeleteCabinet(s1);
-							Teacher[] lessonsTeachers = CheckTeacher(s1);
-							s = DeleteTeacher(s1);
-							Subject subject = CheckSubject(s1);
-							Main_Lesson lesson = new Main_Lesson
-							{
-								Id = Main_Lessons.Count() + 1,
-								LessonNumber = lessonNumber,
-								Weekday = weekday,
-								isDistantсe = false,
-								GroupId = group.Id,
-								CabinetId = cabinet.Id,
-								SubjectId = subject.Id,
-                                WeekNumber = 2
-							};
+							Console.WriteLine($"{weekday} {lessonNumber} {s1}");
+							/*							Cabinet cabinet = CheckCabinet(s1);
+														s = DeleteCabinet(s1);
+														Teacher[] lessonsTeachers = CheckTeacher(s1);
+														s = DeleteTeacher(s1);
+														Subject subject = CheckSubject(s1);
+														Main_Lesson lesson = new Main_Lesson
+														{
+															Id = Main_Lessons.Count() + 1,
+															LessonNumber = lessonNumber,
+															Weekday = weekday,
+															isDistantсe = false,
+															GroupId = group.Id,
+															CabinetId = cabinet.Id,
+															SubjectId = subject.Id,
+															WeekNumber = 2
+														};
 
-							if (cabinet == null)
-								lesson.CabinetId = null;
-							else
-								lesson.CabinetId = cabinet.Id;
+														if (cabinet == null)
+															lesson.CabinetId = null;
+														else
+															lesson.CabinetId = cabinet.Id;
 
-							Main_Lessons.Add(lesson);
+														Main_Lessons.Add(lesson);*/
 						}
 					}
-                }
+					lessonNumber++;
+					if (lessonNumber > 6)
+					{
+						y++;
+						weekday++;
+						lessonNumber = 1;
+					}
+				}
             }
         }
 
@@ -518,6 +519,22 @@ namespace excel_parcing
 		}
         private Subject CheckSubject(string s)
         {
+			Regex regCab = new Regex(@"ауд\.\s*\d+");
+			Regex regTeacher = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.\s*[А-ЯЁ]\.*");
+
+			MatchCollection cabMatches = regCab.Matches(s);
+			MatchCollection teacherMatches = regTeacher.Matches(s);
+
+			foreach (Match m in cabMatches)
+			{
+				s = s.Replace(m.ToString(), "");
+			}
+
+			foreach (Match m in teacherMatches)
+			{
+				s = s.Replace(m.ToString(), "");
+			}
+
 			s = s.Contains("Космонавта Комарова 55") ? s.Replace("Космонавта Комарова 55", "") : s;
 
 			foreach (Match m in new Regex(@"\d{3}").Matches(s))
