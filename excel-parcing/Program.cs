@@ -26,6 +26,7 @@ namespace excel_parcing
             List<Task> tasks = parsing.ParseAllDataAsync();
             //ожидание завершения всех задач
             Task.WaitAll(tasks.ToArray());
+            parsing.ParseLessons();
             //вывод всей информации
             //parsing.ParseAllData();
             parsing.OutputAllData();

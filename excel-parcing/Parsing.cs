@@ -119,6 +119,7 @@ namespace excel_parcing
             TeachersPassport();
             CabinetsPassport();
             SubjectsPassport();
+            lessonPassport();
         }
         //парсинг направлений и групп
         public void ParseCoursesAndGroups()
@@ -351,7 +352,7 @@ namespace excel_parcing
             int lessonNumber = 1;
             for (int x = 3; x < 36; x++)
             {
-                Models.Group group = CheckGroup(UsedRange.Cells[9, x].Value2 == null ? "" : UsedRange.Cells[9, x].Value2.ToString());
+                Models.Group group = GetGroup(UsedRange.Cells[9, x].Value2 == null ? "" : UsedRange.Cells[9, x].Value2.ToString());
                 int weekday = 1;
                 for (int y = 10; y < 159;)
                 {
@@ -382,58 +383,44 @@ namespace excel_parcing
                         if (!string.IsNullOrEmpty(s))
                         {
                             Console.WriteLine($"{weekday} {lessonNumber} {s}");
-/*							Cabinet cabinet = CheckCabinet(s);
-							s = DeleteCabinet(s);
-							Teacher[] lessonsTeachers = CheckTeacher(s);
-							s = DeleteTeacher(s);
-                            Subject subject= CheckSubject(s);
-							Main_Lesson lesson = new Main_Lesson
-							{
-								Id = Main_Lessons.Count() + 1,
-								LessonNumber = lessonNumber,
-								Weekday = weekday,
-								isDistantсe = false,
-								GroupId = group.Id,
+                            Cabinet cab = GetCabinet(s);
+                            Subject subject = GetSubject(s);
+                            var weekNumber = 0;
+                            if (!string.IsNullOrEmpty(s1))
+                                weekNumber = 1;
+                            Main_Lessons.Add(new Main_Lesson
+                            {
+                                Id  = Main_Lessons.Count()+1,
+                                Cabinet = cab,
+                                //CabinetId = cab.Id,
+                                Subject = subject,
                                 SubjectId = subject.Id,
-							};
-							if (isOne == false)
-							{
-								lesson.WeekNumber = 1;
-							}
-
-                            if (cabinet == null)
-                                lesson.CabinetId = null;
-                            else
-                                lesson.CabinetId = cabinet.Id;
-
-                            Main_Lessons.Add(lesson);*/
+                                isDistantсe = false,
+                                Group = group,
+                                GroupId = group.Id,
+                                LessonNumber = lessonNumber,
+                                Weekday = weekday,
+                                WeekNumber = weekNumber
+                            });
 						}
                         if (!string.IsNullOrEmpty(s1))
                         {
 							Console.WriteLine($"{weekday} {lessonNumber} {s1}");
-							/*							Cabinet cabinet = CheckCabinet(s1);
-														s = DeleteCabinet(s1);
-														Teacher[] lessonsTeachers = CheckTeacher(s1);
-														s = DeleteTeacher(s1);
-														Subject subject = CheckSubject(s1);
-														Main_Lesson lesson = new Main_Lesson
-														{
-															Id = Main_Lessons.Count() + 1,
-															LessonNumber = lessonNumber,
-															Weekday = weekday,
-															isDistantсe = false,
-															GroupId = group.Id,
-															CabinetId = cabinet.Id,
-															SubjectId = subject.Id,
-															WeekNumber = 2
-														};
-
-														if (cabinet == null)
-															lesson.CabinetId = null;
-														else
-															lesson.CabinetId = cabinet.Id;
-
-														Main_Lessons.Add(lesson);*/
+							Cabinet cab = GetCabinet(s1);
+							Subject subject = GetSubject(s1);
+							Main_Lessons.Add(new Main_Lesson
+							{
+								Id = Main_Lessons.Count() + 1,
+								Cabinet = cab,
+								Subject = subject,
+								SubjectId = subject.Id,
+								isDistantсe = false,
+								Group = group,
+								GroupId = group.Id,
+								LessonNumber = lessonNumber,
+								Weekday = weekday,
+								WeekNumber = 2
+							});
 						}
 					}
 					lessonNumber++;
@@ -447,84 +434,17 @@ namespace excel_parcing
             }
         }
 
-
-
-
-
-
-        private Models.Group CheckGroup(string text)
+        public Models.Group GetGroup(string CellText)
         {
-            if (!string.IsNullOrEmpty(text))
-            {
-                string[] groupText = text.Split(new char[] { '-' });
-                if (Courses.Any(x => x.Shortname == groupText[0]) == false)
-                {
-                    Courses.Add(new Course
-                    {
-                        Id = Courses.Count() + 1,
-                        Name = groupText[0],
-                        Shortname = groupText[0]
-                    });
-                }
-                Course CurrentCourse = Courses.Where(x => x.Name == groupText[0]).FirstOrDefault();
-                Models.Group group = new Models.Group
-                {
-                    Id = Groups.Count() + 1,
-                    CourseId = CurrentCourse.Id,
-                    Code = groupText[1]
-                };
-                Groups.Add(group);
-                return group;
-            }
-            else return null;
+            string[] group = CellText.Split(new char[] {'-'});
+            return Groups.Where(x=>x.Course.Shortname == group[0] && x.Code == group[1]).FirstOrDefault();
         }
-
-        private Cabinet CheckCabinet(string s)
-        {
-            Cabinet cabinet = new Cabinet();
-			Regex regex = new Regex(@"ауд\.\s*\d+");
-			MatchCollection matches = regex.Matches(s);
-			if (matches.Count == 0)
-			{
-				return null;
-			}
-			foreach (Match match in matches)
-			{
-				string[] cab = match.ToString().Trim().Split(' ', '.').Where(m => m != "").ToArray();
-				if (Cabinets.Any(z => z.Number == cab[1]) == false)
-				{
-					cabinet = new Cabinet
-					{
-						Id = Cabinets.Count()+1,
-						Number = cab[1],
-					};
-					Cabinets.Add(cabinet);
-				}
-                else
-                {
-                    cabinet = Cabinets.Where(z => z.Number == cab[1]).FirstOrDefault();
-                }
-			}
-			return cabinet;
-        }
-        private string DeleteCabinet(string s)
-        {
-			Regex regex = new Regex(@"ауд\.\s*\d+");
-			MatchCollection matches = regex.Matches(s);
-			foreach (Match match in matches)
-            {
-                s = s.Replace(match.ToString(), "");
-            }
-            return s.Trim();
-		}
-        private Subject CheckSubject(string s)
+        public Subject GetSubject(string s)
         {
 			Regex regCab = new Regex(@"ауд\.\s*\d+");
 			Regex regTeacher = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.\s*[А-ЯЁ]\.*");
-
 			MatchCollection cabMatches = regCab.Matches(s);
 			MatchCollection teacherMatches = regTeacher.Matches(s);
-
 			foreach (Match m in cabMatches)
 			{
 				s = s.Replace(m.ToString(), "");
@@ -534,7 +454,6 @@ namespace excel_parcing
 			{
 				s = s.Replace(m.ToString(), "");
 			}
-
 			s = s.Contains("Космонавта Комарова 55") ? s.Replace("Космонавта Комарова 55", "") : s;
 
 			foreach (Match m in new Regex(@"\d{3}").Matches(s))
@@ -543,57 +462,17 @@ namespace excel_parcing
 			s = s.Trim();
 			return GetOrCreate(s);
 		}
-        private Teacher[] CheckTeacher(string CellText)
+        public Cabinet GetCabinet(string CellText)
         {
-			Regex regex = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.\s*[А-ЯЁ]\.*");
+			Regex regex = new Regex(@"ауд\.\s*\d+");
 			MatchCollection matches = regex.Matches(CellText);
-            Teacher[] lessonTeachers = new Teacher[2];
-			foreach (Match match in matches)
-			{
-				string[] s = match.ToString().Trim().Split(' ', '.');
-				if (Teachers.Any(z => z.Surname == s[0] && z.Name == s[1] && z.Patronymic == s[2]))
-				{
-                    if (lessonTeachers[0] == null)
-                    {
-                        lessonTeachers[0] = Teachers.Where(z => z.Surname == s[0] && z.Name == s[1] && z.Patronymic == s[2]).FirstOrDefault();
-					}
-                    else
-                    {
-						lessonTeachers[1] = Teachers.Where(z => z.Surname == s[0] && z.Name == s[1] && z.Patronymic == s[2]).FirstOrDefault();
-					}
-				}
-                else
-                {
-					Teachers.Add(new Teacher
-					{
-						Id = Teachers.Count()+1,
-						Surname = s[0],
-						Name = s[1],
-						Patronymic = s[2]
-					});
-                    if (lessonTeachers[0] == null)
-                    {
-                        lessonTeachers[0] = Teachers.Last();
-                    }
-				}
-			}
-            return lessonTeachers;
-		}
-        private string DeleteTeacher(string s)
-        {
-			Regex regex = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.\s*[А-ЯЁ]\.*");
-			MatchCollection matches = regex.Matches(s);
-            foreach (Match match in matches) 
+            foreach (Match match in matches)
             {
-                s = s.Replace(match.ToString(), "");
+                string[] s = match.ToString().Trim().Split(' ', '.').Where(m => m != "").ToArray();
+                return Cabinets.Where(x=>x.Number == s[1]).FirstOrDefault();
             }
-            s.Trim();
-            return s;
-		}
-
-
-
-
+            return null;
+	    }
 
 
 
@@ -704,6 +583,15 @@ namespace excel_parcing
             Console.WriteLine("Предметы");
             foreach (Subject subject in Subjects)
                 Console.WriteLine($"{subject.Id} {subject.Name}");
+        }
+        public void lessonPassport()
+        {
+            Console.WriteLine("Пары");
+            foreach (Main_Lesson main_Lesson in Main_Lessons)
+            {
+                Console.WriteLine($"{main_Lesson.Weekday} {main_Lesson.LessonNumber} {main_Lesson.Group.Course.Shortname}-{main_Lesson.Group.Code} {main_Lesson.Subject.Name}" +
+                    $" {(main_Lesson.Cabinet == null? "" : main_Lesson.Cabinet.Number)}");
+            }
         }
     }
 }
