@@ -10,6 +10,8 @@ using Microsoft.Office.Interop.Excel;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Runtime.CompilerServices;
 using System.Net.Http.Headers;
+using System.Diagnostics;
+using Range = Microsoft.Office.Interop.Excel.Range;
 
 namespace excel_parcing
 {
@@ -52,6 +54,8 @@ namespace excel_parcing
         public List<Main_Lesson> Main_Lessons = new List<Main_Lesson>();
         public List<Main_Teacher_Lesson> Main_Teacher_Lessons = new List<Main_Teacher_Lesson>();
         Excel.Range UsedRange = null;
+        Excel.Application Application = null;
+        Excel.Workbook Workbook = null;
 
         public void ParseAllData()
         {
@@ -77,6 +81,43 @@ namespace excel_parcing
                 ParseLessons();
             }
         }
+        public void CloseApp()
+        {
+            Process[] excelProcsOld = Process.GetProcessesByName("EXCEL");
+            Excel.Application myExcelApp = null;
+            Excel.Workbooks excelWorkbookTemplate = null;
+            Excel.Workbook excelWorkbook = null;
+            try
+            {
+                //DO sth using myExcelApp , excelWorkbookTemplate, excelWorkbook
+            }
+            catch (Exception ex)
+            {
+            }
+            finally
+            {
+                //Compare the EXCEL ID and Kill it 
+                Process[] excelProcsNew = Process.GetProcessesByName("EXCEL.EXE");
+                foreach (Process procNew in excelProcsNew)
+                {
+                    int exist = 0;
+                    foreach (Process procOld in excelProcsOld)
+                    {
+                        if (procNew.Id == procOld.Id)
+                        {
+                            exist++;
+                        }
+                    }
+                    if (exist == 0)
+                    {
+                        procNew.Kill();
+                    }
+                }
+            }
+            //Workbook.Close(true);
+            //Application.Quit();
+            //System.Runtime.InteropServices.Marshal.ReleaseComObject(Application);
+        }
         //парсинг всей информации
         public List<Task> ParseAllDataAsync()
         {
@@ -84,14 +125,17 @@ namespace excel_parcing
             object SaveChanges = false;
             object MissingObj = System.Reflection.Missing.Value;
 
-            Excel.Application app = new Excel.Application();
-            Excel.Workbooks workbooks = app.Workbooks;
-            Excel.Workbook workbook = workbooks.Open(Path, MissingObj, rOnly, MissingObj, MissingObj,
+            Application = new Excel.Application();
+            Excel.Workbooks workbooks = Application.Workbooks;
+            Workbook = workbooks.Open(Path, MissingObj, rOnly, MissingObj, MissingObj,
                                         MissingObj, MissingObj, MissingObj, MissingObj, MissingObj,
                                         MissingObj, MissingObj, MissingObj, MissingObj, MissingObj);
 
             // Получение всех страниц докуента
-            Excel.Sheets sheets = workbook.Sheets;
+            Excel.Sheets sheets = Workbook.Sheets;
+
+            
+
             foreach (Excel.Worksheet worksheet in sheets)
             {
                 UsedRange = worksheet.UsedRange;
@@ -107,9 +151,12 @@ namespace excel_parcing
                 {
                     task.Start();
                 }
+                
                 return tasks;
             }
+           
             return null;
+
         }
         //вывод всех данных
         public void OutputAllData()
@@ -151,12 +198,12 @@ namespace excel_parcing
                 Groups.Add(new Models.Group
                 {
                     Id = GroupId,
-                    Course = CurrentCourse,
-                    CourseId = CurrentCourse.Id,
-                    Code = group[1]
+                    Speciality = CurrentCourse,
+                    Name = group[1]
                 });
                 GroupId++;
             }
+            Console.WriteLine("[Finished] парсинг направлений и групп");
         }
         //парсинг преподов
         public void ParseTeachers()
@@ -202,6 +249,8 @@ namespace excel_parcing
                     }
                 }
             }
+            Console.WriteLine("[Finished] парсинг преподов");
+
         }
         //парсинг кабинетов
         public void ParseCabinets()
@@ -239,6 +288,8 @@ namespace excel_parcing
                     }
                 }
             }
+            Console.WriteLine("[Finished] парсинг кабинет");
+
         }
         public void ParseSubjects()
         {
@@ -292,6 +343,8 @@ namespace excel_parcing
                     GetOrCreate(s);
                 }
             }
+            Console.WriteLine("[Finished] парсинг предметов");
+
         }
 
 
@@ -385,19 +438,13 @@ namespace excel_parcing
                             Console.WriteLine($"{weekday} {lessonNumber} {s}");
                             Cabinet cab = GetCabinet(s);
                             Subject subject = GetSubject(s);
-                            var weekNumber = 0;
-                            if (!string.IsNullOrEmpty(s1))
-                                weekNumber = 1;
+                            var weekNumber = 0;                            
                             Main_Lessons.Add(new Main_Lesson
                             {
-                                Id  = Main_Lessons.Count()+1,
-                                Cabinet = cab,
-                                //CabinetId = cab.Id,
+                                Audience = cab,
                                 Subject = subject,
-                                SubjectId = subject.Id,
                                 isDistantсe = false,
                                 Group = group,
-                                GroupId = group.Id,
                                 LessonNumber = lessonNumber,
                                 Weekday = weekday,
                                 WeekNumber = weekNumber
@@ -410,16 +457,13 @@ namespace excel_parcing
 							Subject subject = GetSubject(s1);
 							Main_Lessons.Add(new Main_Lesson
 							{
-								Id = Main_Lessons.Count() + 1,
-								Cabinet = cab,
+								Audience = cab,
 								Subject = subject,
-								SubjectId = subject.Id,
 								isDistantсe = false,
 								Group = group,
-								GroupId = group.Id,
 								LessonNumber = lessonNumber,
 								Weekday = weekday,
-								WeekNumber = 2
+								WeekNumber = 1
 							});
 						}
 					}
@@ -432,12 +476,14 @@ namespace excel_parcing
 					}
 				}
             }
+            Console.WriteLine("[Finished] парсинг уроков");
+
         }
 
         public Models.Group GetGroup(string CellText)
         {
             string[] group = CellText.Split(new char[] {'-'});
-            return Groups.Where(x=>x.Course.Shortname == group[0] && x.Code == group[1]).FirstOrDefault();
+            return Groups.Where(x=>x.Speciality.Shortname == group[0] && x.Name == group[1]).FirstOrDefault();
         }
         public Subject GetSubject(string s)
         {
@@ -561,7 +607,7 @@ namespace excel_parcing
         {
             Console.WriteLine("Группы");
             foreach (var group in Groups)
-                Console.WriteLine($"{group.Id.ToString()} {group.CourseId.ToString()} {group.Code}");
+                Console.WriteLine($"{group.Id.ToString()} {group.Name}");
         }
         //вывод всех преподов
         public void TeachersPassport()
@@ -589,8 +635,8 @@ namespace excel_parcing
             Console.WriteLine("Пары");
             foreach (Main_Lesson main_Lesson in Main_Lessons)
             {
-                Console.WriteLine($"{main_Lesson.Weekday} {main_Lesson.LessonNumber} {main_Lesson.Group.Course.Shortname}-{main_Lesson.Group.Code} {main_Lesson.Subject.Name}" +
-                    $" {(main_Lesson.Cabinet == null? "" : main_Lesson.Cabinet.Number)}");
+                Console.WriteLine($"{main_Lesson.Weekday} {main_Lesson.LessonNumber} {main_Lesson.Group.Speciality.Shortname}-{main_Lesson.Group.Name} {main_Lesson.Subject.Name}" +
+                    $" {(main_Lesson.Audience == null? "" : main_Lesson.Audience.Number)}");
             }
         }
     }
