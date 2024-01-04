@@ -513,7 +513,7 @@ namespace excel_parcing
                             IsGeneral = false
                         };
                     }
-                    if (!GroupTeachers.Contains(gt))
+                    if (GroupTeachers.Where(x=> x.Group == gt.Group && x.Subject == gt.Subject && x.Teacher == gt.Teacher).Count()==0)
                     {
                         GroupTeachers.Add(gt);
                     }
@@ -546,7 +546,7 @@ namespace excel_parcing
                             Subject = item.Subject
                         };
                     }
-                    if (!Teacher_Subjects.Contains(ts))
+                    if (Teacher_Subjects.Where(x=> x.Teacher == ts.Teacher && x.Subject == ts.Subject).Count()==0)
                     {
                         Teacher_Subjects.Add(ts);
                     }
