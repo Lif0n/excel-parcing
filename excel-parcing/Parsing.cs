@@ -50,9 +50,11 @@ namespace excel_parcing
         public List<Models.Group> Groups = new List<Models.Group>();
         public List<Subject> Subjects = new List<Subject>();
         public List<Teacher> Teachers = new List<Teacher>();
-        public List<Teacher_Subject> Teacher_Subjects = new List<Teacher_Subject>();
+        public List<GroupTeacher> GroupTeachers = new List<GroupTeacher>();
+        public List<TeacherSubject> Teacher_Subjects = new List<TeacherSubject>();
         public List<Main_Lesson> Main_Lessons = new List<Main_Lesson>();
         public List<Main_Teacher_Lesson> Main_Teacher_Lessons = new List<Main_Teacher_Lesson>();
+        public List<LessonTeacher> LessonTeachers = new List<LessonTeacher>();
         Excel.Range UsedRange = null;
         Excel.Application Application = null;
         Excel.Workbook Workbook = null;
@@ -438,6 +440,7 @@ namespace excel_parcing
                             Console.WriteLine($"{weekday} {lessonNumber} {s}");
                             Cabinet cab = GetCabinet(s);
                             Subject subject = GetSubject(s);
+                            List<Teacher> teachers = GetTeacher(s);
                             var weekNumber = 0;                            
                             Main_Lessons.Add(new Main_Lesson
                             {
@@ -447,7 +450,8 @@ namespace excel_parcing
                                 Group = group,
                                 LessonNumber = lessonNumber,
                                 Weekday = weekday,
-                                WeekNumber = weekNumber
+                                WeekNumber = weekNumber,
+                                Teachers = teachers
                             });
 						}
                         if (!string.IsNullOrEmpty(s1))
@@ -455,6 +459,7 @@ namespace excel_parcing
 							Console.WriteLine($"{weekday} {lessonNumber} {s1}");
 							Cabinet cab = GetCabinet(s1);
 							Subject subject = GetSubject(s1);
+                            List<Teacher> teachers = GetTeacher(s1);
 							Main_Lessons.Add(new Main_Lesson
 							{
 								Audience = cab,
@@ -463,7 +468,8 @@ namespace excel_parcing
 								Group = group,
 								LessonNumber = lessonNumber,
 								Weekday = weekday,
-								WeekNumber = 1
+								WeekNumber = 1,
+                                Teachers = teachers
 							});
 						}
 					}
@@ -480,6 +486,99 @@ namespace excel_parcing
 
         }
 
+        public void ParseGroupTeacher()
+        {
+            foreach (var item in Main_Lessons)
+            {
+                for (int i = 0; i < item.Teachers.Count; i++)
+                {
+                    GroupTeacher gt;
+                    if (i==0)
+                    {
+                        gt = new GroupTeacher()
+                        {
+                            Group = item.Group,
+                            Teacher = item.Teachers[i],
+                            Subject = item.Subject,
+                            IsGeneral = true
+                        };
+                    }
+                    else
+                    {
+                        gt = new GroupTeacher()
+                        {
+                            Group = item.Group,
+                            Teacher = item.Teachers[i],
+                            Subject = item.Subject,
+                            IsGeneral = false
+                        };
+                    }
+                    if (!GroupTeachers.Contains(gt))
+                    {
+                        GroupTeachers.Add(gt);
+                    }
+
+                }
+            }
+            Console.WriteLine("[Finished] парсинг группа-предмет-препод");
+
+        }
+        public void ParseTeacherLesson()
+        {
+            foreach (var item in Main_Lessons)
+            {
+                for (int i = 0; i < item.Teachers.Count; i++)
+                {
+                    TeacherSubject ts;
+                    if (i == 0)
+                    {
+                        ts = new TeacherSubject()
+                        {
+                            Teacher = item.Teachers[i],
+                            Subject = item.Subject
+                        };
+                    }
+                    else
+                    {
+                        ts = new TeacherSubject()
+                        {
+                            Teacher = item.Teachers[i],
+                            Subject = item.Subject
+                        };
+                    }
+                    if (!Teacher_Subjects.Contains(ts))
+                    {
+                        Teacher_Subjects.Add(ts);
+                    }
+                }
+            }
+            Console.WriteLine("[Finished] парсинг урок-препод");
+
+        }
+
+        public void ParseTeacherSubject()
+        {
+            foreach (var item in Main_Lessons)
+            {
+
+            }
+        }
+
+
+        public List<Teacher> GetTeacher(string CellText)
+        {
+
+            Regex regTeacher = new Regex(@"[А-ЯЁа-яё\-]+ [А-ЯЁ]\.\s*[А-ЯЁ]\.*");
+            MatchCollection teacherMatches = regTeacher.Matches(CellText);
+            List<Teacher> teachers = new List<Teacher>();
+            foreach (var item in teacherMatches)
+            {
+                string[] str = item.ToString().Split(' ');
+                str[1] = str[1].Trim().Replace(".", "").Replace(" ", "");
+                teachers.Add(Teachers.First(t => t.Surname == str[0] && t.Name + t.Patronymic == str[1]));
+            }
+            return teachers;
+        }
         public Models.Group GetGroup(string CellText)
         {
             string[] group = CellText.Split(new char[] {'-'});

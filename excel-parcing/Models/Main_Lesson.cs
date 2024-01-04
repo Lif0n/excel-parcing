@@ -19,5 +19,7 @@ namespace excel_parcing.Models
 		public bool isDistantсe { get; set; }
 		public int Weekday { get; set; }
 		public int? WeekNumber { get; set; }
+		[NotMapped]
+        public List<Teacher> Teachers { get; set; }
     }
 }

@@ -32,12 +32,24 @@ namespace excel_parcing
             //ожидание завершения всех задач
             Task.WaitAll(tasks.ToArray());
             parsing.ParseLessons();
+            List<Task> continueTasks = new List<Task>();
+            continueTasks.Add(new Task(parsing.ParseTeacherLesson));
+            continueTasks.Add(new Task(parsing.ParseGroupTeacher));
+            continueTasks.Add(new Task(parsing.ParseTeacherSubject));
+            foreach (Task task in continueTasks)
+            {
+                task.Start();
+            }
+            Task.WaitAll(continueTasks.ToArray());
             //вывод всей информации
             //parsing.OutputAllData();
             stopwatch.Stop();
             parsing.CloseApp();
             Console.WriteLine($"Время выполнения: {stopwatch.ElapsedMilliseconds.ToString()}");
+            ParserContext.Instance.LessonTeachers.AddRange(parsing.LessonTeachers);
+            ParserContext.Instance.GroupTeachers.AddRange(parsing.GroupTeachers);
             ParserContext.Instance.MainLessons.AddRange(parsing.Main_Lessons);
+            ParserContext.Instance.TeacherSubjects.AddRange(parsing.Teacher_Subjects);
             ParserContext.Instance.SaveChanges();
             Console.ReadKey();
             

@@ -23,7 +23,13 @@ namespace excel_parcing
             }
         }
 
+        public DbSet<LessonTeacher> LessonTeachers { get; set; }
+
         public DbSet<Main_Lesson> MainLessons { get; set; }
+
+        public DbSet<GroupTeacher> GroupTeachers { get; set; }
+
+        public DbSet<TeacherSubject> TeacherSubjects { get; set; }
 
         public ParserContext()
         {

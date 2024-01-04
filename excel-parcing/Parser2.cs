@@ -30,7 +30,7 @@ namespace excel_parcing
         public List<Models.Group> Groups = new List<Models.Group>();
         public List<Subject> Subjects = new List<Subject>();
         public List<Teacher> Teachers = new List<Teacher>();
-        public List<Teacher_Subject> Teacher_Subjects = new List<Teacher_Subject>();
+        public List<TeacherSubject> Teacher_Subjects = new List<TeacherSubject>();
         public List<Main_Lesson> Main_Lessons = new List<Main_Lesson>();
 
         public void ParseVse()
