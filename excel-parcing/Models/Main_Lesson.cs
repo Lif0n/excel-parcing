@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace excel_parcing.Models
 {
-	[Table("Scheduled-lesson")]
-	public class Main_Lesson
+    [Table("lesson_plan")]
+    public class Main_Lesson
 	{
 
 		public int Id { get; set; }

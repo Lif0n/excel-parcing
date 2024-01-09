@@ -23,13 +23,13 @@ namespace excel_parcing
             }
         }
 
-        public DbSet<LessonTeacher> LessonTeachers { get; set; }
+        public DbSet<LessonTeacher> LessonTeacher { get; set; }
 
         public DbSet<Main_Lesson> MainLessons { get; set; }
 
-        public DbSet<GroupTeacher> GroupTeachers { get; set; }
+        public DbSet<GroupTeacher> GroupTeacher { get; set; }
 
-        public DbSet<TeacherSubject> TeacherSubjects { get; set; }
+        public DbSet<TeacherSubject> TeacherSubject { get; set; }
 
         public ParserContext()
         {
@@ -38,7 +38,7 @@ namespace excel_parcing
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Main_Lesson>().ToTable("Scheduled-lesson");
+            modelBuilder.Entity<Main_Lesson>().ToTable("lesson_plan");
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

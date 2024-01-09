@@ -529,6 +529,40 @@ namespace excel_parcing
             {
                 for (int i = 0; i < item.Teachers.Count; i++)
                 {
+                    LessonTeacher lt;
+                    if (i == 0)
+                    {
+                        lt = new LessonTeacher()
+                        {
+                            Teacher = item.Teachers[i],
+                            Lesson = item,
+                            IsGeneral = true
+                        };
+                    }
+                    else
+                    {
+                        lt = new LessonTeacher()
+                        {
+                            Teacher = item.Teachers[i],
+                            Lesson = item,
+                            IsGeneral=false
+                        };
+                    }
+                    if (LessonTeachers.Where(x => x.Teacher == lt.Teacher && x.Lesson == lt.Lesson).Count() == 0)
+                    {
+                        LessonTeachers.Add(lt);
+                    }
+                }
+            }
+            Console.WriteLine("[Finished] парсинг урок-препод");
+        }
+
+        public void ParseTeacherSubject()
+        {
+            foreach (var item in Main_Lessons)
+            {
+                for (int i = 0; i < item.Teachers.Count; i++)
+                {
                     TeacherSubject ts;
                     if (i == 0)
                     {
@@ -546,22 +580,13 @@ namespace excel_parcing
                             Subject = item.Subject
                         };
                     }
-                    if (Teacher_Subjects.Where(x=> x.Teacher == ts.Teacher && x.Subject == ts.Subject).Count()==0)
+                    if (Teacher_Subjects.Where(x => x.Teacher == ts.Teacher && x.Subject == ts.Subject).Count() == 0)
                     {
                         Teacher_Subjects.Add(ts);
                     }
                 }
             }
             Console.WriteLine("[Finished] парсинг урок-препод");
-
-        }
-
-        public void ParseTeacherSubject()
-        {
-            foreach (var item in Main_Lessons)
-            {
-
-            }
         }
 
 
