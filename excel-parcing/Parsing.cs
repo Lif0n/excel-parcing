@@ -548,10 +548,8 @@ namespace excel_parcing
                             IsGeneral=false
                         };
                     }
-                    if (LessonTeachers.Where(x => x.Teacher == lt.Teacher && x.Lesson == lt.Lesson).Count() == 0)
-                    {
-                        LessonTeachers.Add(lt);
-                    }
+                    
+                    LessonTeachers.Add(lt);
                 }
             }
             Console.WriteLine("[Finished] парсинг урок-препод");
