@@ -33,7 +33,7 @@ namespace excel_parcing
 
         public ParserContext()
         {
-            Database.EnsureDeleted();
+            //Database.EnsureDeleted();
             Database.EnsureCreated();
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)

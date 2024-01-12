@@ -23,7 +23,7 @@ namespace excel_parcing
             //string path = Console.ReadLine();
             string projectDirectory = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
 
-            string path = Path.Combine(projectDirectory, @"raspisanie.xls");
+            string path = Path.Combine(projectDirectory, @"bolshoe-raspisanie-p-2-semestr.xls");
             //создание и запуск таймера
             Stopwatch stopwatch = Stopwatch.StartNew();
             Parsing parsing = new Parsing(path);
