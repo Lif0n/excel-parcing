@@ -42,4 +42,8 @@
     </COMReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="F:\Программы ДЗ\API\API\API.csproj" />
+  </ItemGroup>
+
 </Project>

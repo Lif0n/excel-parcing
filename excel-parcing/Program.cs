@@ -1,4 +1,5 @@
-﻿using excel_parcing.Models;
+﻿using API.Models;
+using API.Database;
 using Microsoft.Office.Interop.Excel;
 using System;
 using System.Collections.Generic;
@@ -26,33 +27,29 @@ namespace excel_parcing
             string path = Path.Combine(projectDirectory, @"bolshoe-raspisanie-p-2-semestr.xls");
             //создание и запуск таймера
             Stopwatch stopwatch = Stopwatch.StartNew();
-            Parsing parsing = new Parsing(path);
+            Parsing parsing = new Parsing(path, 1, new Schedule
+            {
+                AcademicYear = 2024,
+                Semester = 2,
+                ScheduleStatusId = 1
+            });
             Console.WriteLine("Парсинг начался. Путь: " + path.ToString());
             List<Task> tasks = parsing.ParseAllDataAsync();
             //ожидание завершения всех задач
             Task.WaitAll(tasks.ToArray());
+            parsing.ParseLessonGroupTeachers();
             parsing.ParseLessons();
-            List<Task> continueTasks = new List<Task>
-            {
-                new Task(parsing.ParseTeacherLesson),
-                new Task(parsing.ParseGroupTeacher),
-                new Task(parsing.ParseTeacherSubject)
-            };
-            foreach (Task task in continueTasks)
-            {
-                task.Start();
-            }
-            Task.WaitAll(continueTasks.ToArray());
+            //parsing.ParseTeacherSubject();
             //вывод всей информации
             //parsing.OutputAllData();
             stopwatch.Stop();
             parsing.CloseApp();
             Console.WriteLine($"Время выполнения: {stopwatch.ElapsedMilliseconds.ToString()}");
-            ParserContext.Instance.LessonTeacher.AddRange(parsing.LessonTeachers);
-            ParserContext.Instance.GroupTeacher.AddRange(parsing.GroupTeachers);
-            ParserContext.Instance.MainLessons.AddRange(parsing.Main_Lessons);
-            ParserContext.Instance.TeacherSubject.AddRange(parsing.Teacher_Subjects);
-            ParserContext.Instance.SaveChanges();
+            //ParserContext.Instance.LessonTeacher.AddRange(parsing.LessonTeachers);
+            //ParserContext.Instance.GroupTeacher.AddRange(parsing.GroupTeachers);
+            //ParserContext.Instance.MainLessons.AddRange(parsing.Main_Lessons);
+            //ParserContext.Instance.TeacherSubject.AddRange(parsing.Teacher_Subjects);
+            //ParserContext.Instance.SaveChanges();
             Console.ReadKey();
             
         }
